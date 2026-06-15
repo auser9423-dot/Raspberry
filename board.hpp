@@ -12,6 +12,7 @@ static constexpr int rows{ 12 };
 static constexpr int columns{ 12 };
 static constexpr int out_of_bounds{ -9 };
 static constexpr int empty{};
+static constexpr int no_en_passant{ out_of_bounds };
 
 class Board
 {
@@ -34,7 +35,27 @@ class Board
         return temp_board;
     }();
 
+    // Board state variables
+    int en_passant_square{ no_en_passant };
+    bool white_castle_king{ true };
+    bool white_castle_queen{ true };
+    bool black_castle_king{ true };
+    bool black_castle_queen{ true };
+    bool white_king_rook_moved{ false };
+    bool white_queen_rook_moved{ false };
+    bool black_king_rook_moved{ false };
+    bool black_queen_rook_moved{ false };
+    int white_king_position{ board_end - 3 };
+    int black_king_position{ board_start + 4 };
+    bool white_king_moved{ false };
+    bool black_king_moved{ false };
+
+
     friend Moves generate_pseudo_moves(const Board& board, int colour);
+    friend bool is_square_attacked(const Board& board, int square, int attacking_colour);
+    friend void make_move(Board& board, const Move& move);
+
+    public:
 };
 
 #endif

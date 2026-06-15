@@ -23,6 +23,7 @@ struct Move
 {
     int start{};
     int end{};
+    int promotion_piece{};
 };
 
 struct Moves
@@ -51,7 +52,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
             int single_push_destination{ board.board[single_push_end] };
             if (single_push_destination == empty)
             {
-                moves[move_count] = {start, single_push_end};
+                moves[move_count] = {start, single_push_end, none};
                 move_count++;
 
                 // Double push
@@ -59,7 +60,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int double_push_destination{ board.board[double_push_end] };
                 if (double_push_destination == empty)
                 {
-                    moves[move_count] = {start, double_push_end};
+                    moves[move_count] = {start, double_push_end, none};
                     move_count++;
                 }
             }
@@ -73,7 +74,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 if (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end};
+                    moves[move_count] = {start, end, none};
                     move_count++;
                 }
             }
@@ -86,7 +87,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 if (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end};
+                    moves[move_count] = {start, end, none};
                     move_count++;
                 }
             }
@@ -99,7 +100,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 while (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end};
+                    moves[move_count] = {start, end, none};
                     move_count++;
 
                     end += diagonal_offsets[i];
@@ -116,7 +117,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 while (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end};
+                    moves[move_count] = {start, end, none};
                     move_count++;
 
                     end += straight_offsets[i];

@@ -24,4 +24,6 @@ static constexpr int rook{ 4 };
 static constexpr int queen{ 5 };
 static constexpr int king{ 6 };
 
+static constexpr int none{};
+
 #endif

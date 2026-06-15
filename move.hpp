@@ -62,6 +62,8 @@ History make_move(Board& board, const Move& move)
     history.white_king_moved = board.white_king_moved;
     history.black_king_moved = board.black_king_moved;
 
+    board.en_passant_square = no_en_passant;
+
     int colour = (move.piece > 0) ? white : black;
 
     board.board[move.start] = empty;

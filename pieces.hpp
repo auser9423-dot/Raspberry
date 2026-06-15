@@ -16,4 +16,12 @@ static constexpr int b_rook{ -4 };
 static constexpr int b_queen{ -5 };
 static constexpr int b_king{ -6 };
 
+// "Neutral" pieces
+static constexpr int pawn{ 1 };
+static constexpr int knight{ 2 };
+static constexpr int bishop{ 3 };
+static constexpr int rook{ 4 };
+static constexpr int queen{ 5 };
+static constexpr int king{ 6 };
+
 #endif

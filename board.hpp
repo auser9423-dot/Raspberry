@@ -37,23 +37,21 @@ class Board
 
     // Board state variables
     int en_passant_square{ no_en_passant };
-    bool white_castle_king{ true };
-    bool white_castle_queen{ true };
-    bool black_castle_king{ true };
-    bool black_castle_queen{ true };
     bool white_king_rook_moved{ false };
     bool white_queen_rook_moved{ false };
     bool black_king_rook_moved{ false };
     bool black_queen_rook_moved{ false };
-    int white_king_position{ board_end - 3 };
-    int black_king_position{ board_start + 4 };
+    int white_king_position{ board_start + 4 };
+    int black_king_position{ board_end - 3 };
     bool white_king_moved{ false };
     bool black_king_moved{ false };
 
 
     friend Moves generate_pseudo_moves(const Board& board, int colour);
+    friend Moves generate_legal_moves(Board& board, int colour);
     friend bool is_square_attacked(const Board& board, int square, int attacking_colour);
-    friend void make_move(Board& board, const Move& move);
+    friend History make_move(Board& board, const Move& move);
+    friend void undo_move(Board& board, const Move& move, const History& history);
 
     public:
 };

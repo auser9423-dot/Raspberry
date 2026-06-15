@@ -125,13 +125,13 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 {
                     for (int i{}; i < promotion_pieces.size(); i++)
                     {
-                        moves[move_count] = {start, single_push_end, promotion_pieces[i] * colour, promotion_move, piece, single_push_destination};
+                        moves[move_count] = {start, single_push_end, promotion_pieces[i] * colour, promotion_move, piece, single_push_destination, false};
                         move_count++;
                     }
                 }
                 else
                 {
-                    moves[move_count] = {start, single_push_end, none, none, piece, single_push_destination};
+                    moves[move_count] = {start, single_push_end, none, none, piece, single_push_destination, false};
                     move_count++;
 
                     // Double push
@@ -139,7 +139,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                     int double_push_destination{ board.board[double_push_end] };
                     if (double_push_destination == empty)
                     {
-                        moves[move_count] = {start, double_push_end, none, double_push_move, piece, double_push_destination};
+                        moves[move_count] = {start, double_push_end, none, double_push_move, piece, double_push_destination, false};
                         move_count++;
                     }
                 }
@@ -148,45 +148,54 @@ Moves generate_pseudo_moves(const Board& board, int colour)
             // Left capture
             int left_capture_end{ start + (left_capture * colour) };
             int left_capture_destination{ board.board[left_capture_end] };
-            if (left_capture_destination * colour < 0 || left_capture_end == board.en_passant_square)
+            if (left_capture_destination * colour < 0)
             {
                 // Left capture promotion
                 if (left_capture_end / rows == promotion_row)
                 {
                     for (int i{}; i < promotion_pieces.size(); i++)
                     {
-                        moves[move_count] = {start, left_capture_end, promotion_pieces[i] * colour, capture_promotion_move, piece, left_capture_destination};
+                        moves[move_count] = {start, left_capture_end, promotion_pieces[i] * colour, capture_promotion_move, piece, left_capture_destination, false};
                         move_count++;
                     }
                 }
                 else
                 {
-                    moves[move_count] = {start, left_capture_end, none, none, piece, left_capture_destination};
+                    moves[move_count] = {start, left_capture_end, none, none, piece, left_capture_destination, false};
                     move_count++;
                 }
+            }
+            else if (left_capture_end == board.en_passant_square)
+            {
+                moves[move_count] = {start, left_capture_end, none, en_passant_move, piece, left_capture_destination, false};
+                move_count++;
             }
 
             // Right capture
             int right_capture_end{ start + (right_capture * colour) };
             int right_capture_destination{ board.board[right_capture_end] };
-            if (right_capture_destination * colour < 0 || right_capture_end == board.en_passant_square)
+            if (right_capture_destination * colour < 0)
             {
                 // Right capture promotion
                 if (right_capture_end / rows == promotion_row)
                 {
                     for (int i{}; i < promotion_pieces.size(); i++)
                     {
-                        moves[move_count] = {start, right_capture_end, promotion_pieces[i] * colour, capture_promotion_move, piece, right_capture_destination};
+                        moves[move_count] = {start, right_capture_end, promotion_pieces[i] * colour, capture_promotion_move, piece, right_capture_destination, false};
                         move_count++;
                     }
                 }
                 else
                 {
-                    moves[move_count] = {start, right_capture_end, none, none, piece, right_capture_destination};
+                    moves[move_count] = {start, right_capture_end, none, none, piece, right_capture_destination, false};
                     move_count++;
                 }
             }
-
+            else if (right_capture_end == board.en_passant_square)
+            {
+                moves[move_count] = {start, right_capture_end, none, en_passant_move, piece, right_capture_destination, false};
+                move_count++;
+            }
         }
         else if (piece_type == knight)
         {
@@ -196,7 +205,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 if (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end, none, none, piece, destination};
+                    moves[move_count] = {start, end, none, none, piece, destination, false};
                     move_count++;
                 }
             }
@@ -209,7 +218,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 if (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end, none, none, piece, destination};
+                    moves[move_count] = {start, end, none, none, piece, destination, false};
                     move_count++;
                 }
             }
@@ -226,7 +235,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                         && !board.white_king_rook_moved
                     )
                     {
-                        moves[move_count] = {start, white_king_start + 2, none, castle_move, piece, board.board[white_king_start + 2]};
+                        moves[move_count] = {start, white_king_start + 2, none, king_side_castle_move, piece, board.board[white_king_start + 2], false};
                         move_count++;
                     }
 
@@ -238,7 +247,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                         && !board.white_queen_rook_moved
                     )
                     {
-                        moves[move_count] = {start, white_king_start - 2, none, castle_move, piece, board.board[white_king_start - 2]};
+                        moves[move_count] = {start, white_king_start - 2, none, queen_side_castle_move, piece, board.board[white_king_start - 2], false};
                         move_count++;
                     }
                 }
@@ -255,7 +264,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                         && !board.white_king_rook_moved
                     )
                     {
-                        moves[move_count] = {start, black_king_start + 2, none, castle_move, piece, board.board[black_king_start + 2]};
+                        moves[move_count] = {start, black_king_start + 2, none, king_side_castle_move, piece, board.board[black_king_start + 2], false};
                         move_count++;
                     }
 
@@ -267,7 +276,8 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                         && !board.white_queen_rook_moved
                     )
                     {
-                        moves[move_count] = {start, black_king_start - 2, none, castle_move, piece, board.board[black_king_start - 2]};
+                        moves[move_count] = {start, black_king_start - 2, none, queen_side_castle_move, piece, board.board[black_king_start - 2], false};
+                        move_count++;
                     }
                 }
             }
@@ -281,7 +291,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 while (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end, none, none, piece, destination};
+                    moves[move_count] = {start, end, none, none, piece, destination, false};
                     move_count++;
 
                     if (destination != empty)
@@ -303,7 +313,7 @@ Moves generate_pseudo_moves(const Board& board, int colour)
                 int destination{ board.board[end] };
                 while (destination != out_of_bounds && destination * colour <= 0)
                 {
-                    moves[move_count] = {start, end, none, none, piece, destination};
+                    moves[move_count] = {start, end, none, none, piece, destination, false};
                     move_count++;
 
                     if (destination != empty)
@@ -319,6 +329,26 @@ Moves generate_pseudo_moves(const Board& board, int colour)
     }
 
     return {move_count, moves};
+}
+
+Moves generate_legal_moves(Board& board, int colour)
+{
+    Moves pseudo_moves{ generate_pseudo_moves(board, colour) };
+    int king_position = (colour == white) ? board.white_king_position : board.black_king_position;
+
+    for (int i{}; i <= pseudo_moves.move_count; i++)
+    {
+        Move& move{ pseudo_moves.moves[i] };
+        History history{ make_move(board, move) };
+        if (!is_square_attacked(board, king_position, -colour))
+        {
+            pseudo_moves.moves[i].is_legal = true;
+        }
+
+        undo_move(board, move, history);
+    }
+
+    return pseudo_moves;
 }
 
 #endif

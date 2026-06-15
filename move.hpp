@@ -79,8 +79,8 @@ History make_move(Board& board, const Move& move)
                 board.white_king_moved = true;
                 board.white_king_rook_moved = true;
 
-                board.board[board_start] = empty;
-                board.board[board_start + 2] = w_rook;
+                board.board[board_start + 7] = empty;
+                board.board[board_start + 7 - 2] = w_rook;
 
                 board.white_king_position = move.end;
             }
@@ -89,8 +89,8 @@ History make_move(Board& board, const Move& move)
                 board.black_king_moved = true;
                 board.black_king_rook_moved = true;
 
-                board.board[board_end - 7] = empty;
-                board.board[board_end - 7 + 2] = b_rook;
+                board.board[board_end] = empty;
+                board.board[board_end - 2] = b_rook;
 
                 board.black_king_position = move.end;
             }
@@ -102,8 +102,8 @@ History make_move(Board& board, const Move& move)
                 board.white_king_moved = true;
                 board.white_queen_rook_moved = true;
 
-                board.board[board_start + 7] = empty;
-                board.board[board_start + 7 - 3] = w_rook;
+                board.board[board_start] = empty;
+                board.board[board_start + 3] = w_rook;
 
                 board.white_king_position = move.end;
             }
@@ -112,8 +112,8 @@ History make_move(Board& board, const Move& move)
                 board.black_king_moved = true;
                 board.black_queen_rook_moved = true;
 
-                board.board[board_end] = empty;
-                board.board[board_end - 3] = b_rook;
+                board.board[board_end - 7] = empty;
+                board.board[board_end - 7 + 3] = b_rook;
 
                 board.black_king_position = move.end;
             }
@@ -142,22 +142,22 @@ History make_move(Board& board, const Move& move)
     {
         if (move.start % columns == 2)
         {
-            board.white_king_rook_moved = true;
+            board.white_queen_rook_moved = true;
         }
         else if (move.start % columns == 9)
         {
-            board.white_queen_rook_moved = true;
+            board.white_king_rook_moved = true;
         }
     }
     else if (move.piece == b_rook)
     {
         if (move.start % columns == 2)
         {
-            board.black_king_rook_moved = true;
+            board.black_queen_rook_moved = true;
         }
         else if (move.start % columns == 9)
         {
-            board.white_queen_rook_moved = true;
+            board.black_king_rook_moved = true;
         }
     }
 
@@ -185,26 +185,26 @@ void undo_move(Board& board, const Move& move, const History& history)
     {
         if (colour == white)
         {
-            board.board[board_start] = w_rook;
-            board.board[board_start + 2] = empty;
+            board.board[board_start + 7] = w_rook;
+            board.board[board_start + 7 - 2] = empty;
         }
         else
         {
-            board.board[board_end - 7] = b_rook;
-            board.board[board_end - 7 + 2] = empty;
+            board.board[board_end] = b_rook;
+            board.board[board_end - 2] = empty;
         }
     }
     else if (move.move_type == queen_side_castle_move)
     {
         if (colour == white)
         {
-            board.board[board_start + 7] = w_rook;
-            board.board[board_start + 7 - 3] = empty;
+            board.board[board_start] = w_rook;
+            board.board[board_start + 3] = empty;
         }
         else
         {
-            board.board[board_end] = b_rook;
-            board.board[board_end - 3] = empty;
+            board.board[board_end - 7] = b_rook;
+            board.board[board_end - 7 + 3] = empty;
         }
     }
     else if (move.move_type == en_passant_move)

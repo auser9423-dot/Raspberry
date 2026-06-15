@@ -1,6 +1,7 @@
 #ifndef BOARD
 #define BOARD
 
+#include "board_helpers.hpp"
 #include <array>
 
 // Constants
@@ -10,6 +11,7 @@ static constexpr int board_end{ 117 };
 static constexpr int rows{ 12 };
 static constexpr int columns{ 12 };
 static constexpr int out_of_bounds{ -9 };
+static constexpr int empty{};
 
 class Board
 {
@@ -31,6 +33,8 @@ class Board
 
         return temp_board;
     }();
+
+    friend Moves generate_pseudo_moves(const Board& board, int colour);
 };
 
 #endif

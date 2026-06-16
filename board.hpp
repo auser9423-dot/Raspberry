@@ -40,6 +40,8 @@ class Board
         return temp_board;
     }();
 
+    Bitboards bitboards{};
+
     // Board state variables
     int en_passant_square{ no_en_passant };
     bool white_king_rook_moved{ false };

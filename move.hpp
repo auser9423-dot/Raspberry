@@ -8,15 +8,15 @@
 #include <array>
 
 // Constants 
-static constexpr int max_moves{ 218 };
+inline static constexpr int max_moves{ 218 };
 
 // Move types
-static constexpr int en_passant_move{};
-static constexpr int double_push_move{ 1 };
-static constexpr int promotion_move{ 2 };
-static constexpr int capture_promotion_move{ 3 };
-static constexpr int king_side_castle_move{ 4 };
-static constexpr int queen_side_castle_move{ 5 };
+inline static constexpr int en_passant_move{ 6 };
+inline static constexpr int double_push_move{ 1 };
+inline static constexpr int promotion_move{ 2 };
+inline static constexpr int capture_promotion_move{ 3 };
+inline static constexpr int king_side_castle_move{ 4 };
+inline static constexpr int queen_side_castle_move{ 5 };
 
 struct Move
 {
@@ -48,7 +48,7 @@ struct History
     bool black_king_moved{};
 };
 
-History make_move(Board& board, const Move& move)
+inline History make_move(Board& board, const Move& move)
 {
     // Save the pervious states
     History history;
@@ -74,6 +74,15 @@ History make_move(Board& board, const Move& move)
     else
     {
         board.board[move.end] = move.piece;
+        if (move.piece == w_king)
+        {
+            board.white_king_position = move.end;
+        }
+        else if (move.piece == b_king)
+        {
+            board.black_king_position = move.end;
+        }
+
         if (move.move_type == king_side_castle_move)
         {
             if (colour == white)
@@ -130,43 +139,35 @@ History make_move(Board& board, const Move& move)
         }
     }
 
-    if (move.piece == w_king)
+    if (board.white_king_position != board_start + 4)
     {
-        board.white_king_position = move.end;
         board.white_king_moved = true;
     }
-    else if (move.piece == b_king)
+
+    if (board.board[board_start] != w_rook)
     {
-        board.black_king_position = move.end;
-        board.black_king_moved = true;
+        board.white_queen_rook_moved = true;
     }
-    else if (move.piece == w_rook)
+
+    if (board.board[board_start + 7] != w_rook)
     {
-        if (move.start % columns == 2)
-        {
-            board.white_queen_rook_moved = true;
-        }
-        else if (move.start % columns == 9)
-        {
-            board.white_king_rook_moved = true;
-        }
+        board.white_king_rook_moved = true;
     }
-    else if (move.piece == b_rook)
+
+    if (board.board[board_end] != b_rook)
     {
-        if (move.start % columns == 2)
-        {
-            board.black_queen_rook_moved = true;
-        }
-        else if (move.start % columns == 9)
-        {
-            board.black_king_rook_moved = true;
-        }
+        board.black_king_rook_moved = true;
+    }
+
+    if (board.board[board_end - 7] != b_rook)
+    {
+        board.black_queen_rook_moved = true;
     }
 
     return history;
 }
 
-void undo_move(Board& board, const Move& move, const History& history)
+inline void undo_move(Board& board, const Move& move, const History& history)
 {
     board.en_passant_square = history.en_passant_square;
     board.white_king_rook_moved = history.white_king_rook_moved;

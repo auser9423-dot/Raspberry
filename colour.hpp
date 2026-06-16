@@ -2,7 +2,7 @@
 #define COLOUR
 
 // Constants
-int white{ 1 };
-int black{ -1 };
+inline static constexpr int white{ 1 };
+inline static constexpr int black{ -1 };
 
 #endif

@@ -2,17 +2,18 @@
 #define BOARD
 
 #include "board_helpers.hpp"
+#include "pieces.hpp"
 #include <array>
 
 // Constants
-static constexpr int board_size{ 144 };
-static constexpr int board_start{ 26 };
-static constexpr int board_end{ 117 };
-static constexpr int rows{ 12 };
-static constexpr int columns{ 12 };
-static constexpr int out_of_bounds{ -9 };
-static constexpr int empty{};
-static constexpr int no_en_passant{ out_of_bounds };
+inline static constexpr int board_size{ 144 };
+inline static constexpr int board_start{ 26 };
+inline static constexpr int board_end{ 117 };
+inline static constexpr int rows{ 12 };
+inline static constexpr int columns{ 12 };
+inline static constexpr int out_of_bounds{ -9 };
+inline static constexpr int empty{};
+inline static constexpr int no_en_passant{ out_of_bounds };
 
 class Board
 {
@@ -30,6 +31,10 @@ class Board
             {
                 temp_board[i] = out_of_bounds;
             }
+            else
+            {
+                temp_board[i] = empty;
+            }
         }
 
         return temp_board;
@@ -46,6 +51,7 @@ class Board
     bool white_king_moved{ false };
     bool black_king_moved{ false };
 
+    static constexpr std::array<int, 8> default_piece_order{rook, knight, bishop, queen, king, bishop, knight, rook};
 
     friend Moves generate_pseudo_moves(const Board& board, int colour);
     friend Moves generate_legal_moves(Board& board, int colour);
@@ -54,6 +60,38 @@ class Board
     friend void undo_move(Board& board, const Move& move, const History& history);
 
     public:
+    void setup_default_start_position()
+    {
+        for (int i{ board_start }; i <= board_end; i++)
+        {
+            int column{ i % columns };
+            if (column != 0 && column != 1 && column != 10 && column != 11)
+            {
+                int row{ i / rows };
+
+                if (row == 2)
+                {
+                    board[i] = default_piece_order[column - 2];
+                }
+                else if (row == 3)
+                {
+                    board[i] = w_pawn;
+                }
+                else if (row == 8)
+                {
+                    board[i] = b_pawn;
+                }
+                else if (row == 9)
+                {
+                    board[i] = -default_piece_order[column - 2];
+                }
+                else
+                {
+                    board[i] = empty;
+                }
+            }
+        }
+    }
 };
 
 #endif

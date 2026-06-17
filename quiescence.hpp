@@ -21,6 +21,8 @@ int quiescence(Board& board, int alpha, int beta, int colour)
     }
 
     Moves legal_moves{ generate_legal_moves(board, colour) };
+    order_moves(legal_moves);
+    
     for (int i{}; i < legal_moves.move_count; i++)
     {
         Move move{ legal_moves.moves[i] };

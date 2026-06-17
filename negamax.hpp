@@ -3,6 +3,7 @@
 
 #include "move.hpp"
 #include "quiescence.hpp"
+#include "evaluate.hpp"
 
 inline static constexpr int negative_infinity{ -1000000000 };
 
@@ -16,6 +17,8 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth)
     int best_score{ negative_infinity };
 
     Moves legal_moves{ generate_legal_moves(board, colour) };
+    order_moves(legal_moves);
+
     for (int i{}; i < legal_moves.move_count; i++)
     {
         Move move{ legal_moves.moves[i] };
@@ -49,6 +52,8 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
     Move best_move{};
     int best_score{ negative_infinity };
 
+
+    order_moves(legal_moves);
     for (int i{}; i < legal_moves.move_count; i++)
     {
         Move move{ legal_moves.moves[i] };

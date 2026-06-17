@@ -96,7 +96,7 @@ int main()
                 }
                 else if (word == "go")
                 {
-                    int depth{ 6 };
+                    int depth{ 5 };
                     int alpha{ negative_infinity };
                     int beta{ -alpha };
 

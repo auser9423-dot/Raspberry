@@ -6,8 +6,11 @@
 #include "bitboard.hpp"
 #include "PSTs.hpp"
 #include "colour.hpp"
+#include "move.hpp"
 #include <array>
 #include <bit>
+#include <algorithm>
+#include <cmath>
 
 // Constants
 inline static constexpr std::array<int, 13> piece_values
@@ -24,6 +27,28 @@ inline static constexpr std::array<int, 13> pieces
     b_king, b_queen, b_rook, b_bishop, b_knight, b_pawn, empty, // empty = garbage
     w_pawn, w_knight, w_bishop, w_rook, w_queen, w_king,
 };
+
+inline static constexpr std::array<std::array<int, 6>, 6> MVV_LVA
+{
+    { // p,   n,   b,   r,   q,   k   (attacker)
+        {600, 500, 400, 300, 200, 100}, // p   (victim)
+        {700, 600, 500, 400, 300, 200}, // n
+        {800, 700, 600, 500, 400, 300}, // b
+        {900, 800, 700, 600, 500, 400}, // r
+        {1000, 900, 800, 700, 600, 500}, // q
+        {1100, 1000, 900, 800, 700, 600} // k
+    }
+};
+
+void order_moves(Moves& moves)
+{
+    std::sort(moves.moves.begin(), moves.moves.begin() + moves.move_count, [](Move a, Move b)
+    {
+        int score_a = (a.captured_piece == empty) ? 0 : MVV_LVA[std::abs(a.captured_piece) - 1][std::abs(a.piece) - 1];
+        int score_b = (b.captured_piece == empty) ? 0 : MVV_LVA[std::abs(b.captured_piece) - 1][std::abs(b.piece) - 1];
+        return score_a > score_b;
+    });
+}
 
 int evaluate (const Board& board, int colour)
 {

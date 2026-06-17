@@ -12,8 +12,14 @@ int main()
     int depth{ 7 };
     int colour{ 1 };
 
+    auto start{ std::chrono::steady_clock::now() };
     unsigned long long nodes{ perft(board, colour, depth) };
-    std::cout << "Depth: " << depth << '\n' << "Nodes: " << nodes;
+    auto end{ std::chrono::steady_clock::now() };
+
+    std::chrono::duration<double> seconds{ end - start };
+    double nps{ nodes / seconds.count() };
+
+    std::cout << "Depth: " << depth << '\n' << "Nodes: " << nodes << '\n' << "NPS: " << static_cast<unsigned long long>(nps);
 
     return 0;
 }

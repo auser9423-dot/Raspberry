@@ -5,6 +5,7 @@
 #include "pieces.hpp"
 #include "bitboard.hpp"
 #include <array>
+#include <string>
 
 // Constants
 inline static constexpr int board_size{ 144 };
@@ -34,6 +35,96 @@ inline static constexpr std::array<int, board_size> board_144_to_64 = []()
         {
             temp_board[i] = index_counter;
             index_counter++;
+        }
+    }
+    return temp_board;
+}();
+
+inline int square_to_index(std::string square)
+{
+    int column{};
+    int row{ (square[1] - '0') + 1 };
+
+    switch (square[0])
+    {
+        case 'a':
+            column = 2;
+            break;
+        case 'b':
+            column = 3;
+            break;
+        case 'c':
+            column = 4;
+            break;
+        case 'd':
+            column = 5;
+            break;
+        case 'e':
+            column = 6;
+            break;
+        case 'f':
+            column = 7;
+            break;
+        case 'g':
+            column = 8;
+            break;
+        case 'h':
+            column = 9;
+            break;
+    }
+
+    return (row * columns) + column;
+}
+
+inline static const std::array<std::string, board_size> index_to_square = []()
+{
+    std::array<std::string, board_size> temp_board{};
+    for (int i{}; i < board_size; i++)
+    {
+        if
+        (
+            i % columns == 0 || i % columns == 1 || i % columns == 10 || i % columns == 11
+            || i / rows == 0 || i / rows == 1 || i / rows == 10 || i / rows == 11
+        )
+        {
+            temp_board[i] = " ";
+        }
+        else
+        {
+            char column{};
+            switch ((i % columns) - 1)
+            {
+                case 1:
+                    column = 'a';
+                    break;
+                case 2:
+                    column = 'b';
+                    break;
+                case 3:
+                    column = 'c';
+                    break;
+                case 4:
+                    column = 'd';
+                    break;
+                case 5:
+                    column = 'e';
+                    break;
+                case 6:
+                    column = 'f';
+                    break;
+                case 7:
+                    column = 'g';
+                    break;
+                case 8:
+                    column = 'h';
+                    break;
+                default:
+                    column = 'x';
+                    break;
+            }
+
+            char row{ static_cast<char>(((i / rows) - 1) + '0') };
+            temp_board[i] = {column, row};
         }
     }
     return temp_board;

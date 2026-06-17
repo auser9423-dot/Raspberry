@@ -67,13 +67,19 @@ inline History make_move(Board& board, const Move& move)
     int colour = (move.piece > 0) ? white : black;
 
     board.board[move.start] = empty;
+    board.bitboards.bitboards[move.piece + bitboard_offset] ^= (1ULL << board_144_to_64[move.start]);
+    board.bitboards.bitboards[move.captured_piece + bitboard_offset] ^= (1ULL << board_144_to_64[move.end]);
+
     if (move.move_type == promotion_move || move.move_type == capture_promotion_move)
     {
         board.board[move.end] = move.promotion_piece;
+        board.bitboards.bitboards[move.promotion_piece + bitboard_offset] |= (1ULL << board_144_to_64[move.end]);
     }
     else
     {
         board.board[move.end] = move.piece;
+        board.bitboards.bitboards[move.piece + bitboard_offset] |= (1ULL << board_144_to_64[move.end]);
+
         if (move.piece == w_king)
         {
             board.white_king_position = move.end;
@@ -93,6 +99,9 @@ inline History make_move(Board& board, const Move& move)
                 board.board[board_start + 7] = empty;
                 board.board[board_start + 7 - 2] = w_rook;
 
+                board.bitboards.bitboards[w_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_start + 7]);
+                board.bitboards.bitboards[w_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_start + 7 - 2]);
+
                 board.white_king_position = move.end;
             }
             else
@@ -102,6 +111,9 @@ inline History make_move(Board& board, const Move& move)
 
                 board.board[board_end] = empty;
                 board.board[board_end - 2] = b_rook;
+
+                board.bitboards.bitboards[b_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_end]);
+                board.bitboards.bitboards[b_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_end - 2]);
 
                 board.black_king_position = move.end;
             }
@@ -116,6 +128,9 @@ inline History make_move(Board& board, const Move& move)
                 board.board[board_start] = empty;
                 board.board[board_start + 3] = w_rook;
 
+                board.bitboards.bitboards[w_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_start]);
+                board.bitboards.bitboards[w_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_start + 3]);
+
                 board.white_king_position = move.end;
             }
             else
@@ -126,12 +141,16 @@ inline History make_move(Board& board, const Move& move)
                 board.board[board_end - 7] = empty;
                 board.board[board_end - 7 + 3] = b_rook;
 
+                board.bitboards.bitboards[b_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_end - 7]);
+                board.bitboards.bitboards[b_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_end - 7 + 3]);
+
                 board.black_king_position = move.end;
             }
         }
         else if (move.move_type == en_passant_move)
         {
             board.board[move.end + (rows * -colour)] = empty;
+            board.bitboards.bitboards[(pawn * -colour) + bitboard_offset] ^= (1ULL << board_144_to_64[move.end + (rows * -colour)]);
         }
         else if (move.move_type == double_push_move)
         {
@@ -184,17 +203,36 @@ inline void undo_move(Board& board, const Move& move, const History& history)
     board.board[move.end] = move.captured_piece;
     board.board[move.start] = move.piece;
 
+    board.bitboards.bitboards[move.captured_piece + bitboard_offset] |= (1ULL << board_144_to_64[move.end]);
+
+    if (move.move_type == capture_promotion_move || move.move_type == promotion_move)
+    {
+        board.bitboards.bitboards[move.promotion_piece + bitboard_offset] ^= (1ULL << board_144_to_64[move.end]);
+    }
+    else
+    {
+        board.bitboards.bitboards[move.piece + bitboard_offset] ^= (1ULL << board_144_to_64[move.end]);
+    }
+
+    board.bitboards.bitboards[move.piece + bitboard_offset] |= (1ULL << board_144_to_64[move.start]);
+
     if (move.move_type == king_side_castle_move)
     {
         if (colour == white)
         {
             board.board[board_start + 7] = w_rook;
             board.board[board_start + 7 - 2] = empty;
+
+            board.bitboards.bitboards[w_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_start + 7]);
+            board.bitboards.bitboards[w_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_start + 7 - 2]);
         }
         else
         {
             board.board[board_end] = b_rook;
             board.board[board_end - 2] = empty;
+
+            board.bitboards.bitboards[b_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_end]);
+            board.bitboards.bitboards[b_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_end - 2]);
         }
     }
     else if (move.move_type == queen_side_castle_move)
@@ -203,16 +241,23 @@ inline void undo_move(Board& board, const Move& move, const History& history)
         {
             board.board[board_start] = w_rook;
             board.board[board_start + 3] = empty;
+
+            board.bitboards.bitboards[w_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_start]);
+            board.bitboards.bitboards[w_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_start + 3]);
         }
         else
         {
             board.board[board_end - 7] = b_rook;
             board.board[board_end - 7 + 3] = empty;
+
+            board.bitboards.bitboards[b_rook + bitboard_offset] |= (1ULL << board_144_to_64[board_end - 7]);
+            board.bitboards.bitboards[b_rook + bitboard_offset] ^= (1ULL << board_144_to_64[board_end - 7 + 3]);
         }
     }
     else if (move.move_type == en_passant_move)
     {
         board.board[move.end + (rows * -colour)] = pawn * -colour;
+        board.bitboards.bitboards[(pawn * -colour) + bitboard_offset] |= (1ULL << board_144_to_64[move.end + (rows * -colour)]);
     }
 }
 

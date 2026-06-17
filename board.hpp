@@ -3,6 +3,7 @@
 
 #include "board_helpers.hpp"
 #include "pieces.hpp"
+#include "bitboard.hpp"
 #include <array>
 
 // Constants
@@ -14,6 +15,29 @@ inline static constexpr int columns{ 12 };
 inline static constexpr int out_of_bounds{ -9 };
 inline static constexpr int empty{};
 inline static constexpr int no_en_passant{ out_of_bounds };
+inline static constexpr std::array<int, board_size> board_144_to_64 = []()
+{
+    std::array<int, board_size> temp_board{};
+    int index_counter{};
+
+    for (int i{}; i < board_size; i++)
+    {
+        if
+        (
+            i % columns == 0 || i % columns == 1 || i % columns == 10 || i % columns == 11
+            || i / rows == 0 || i / rows == 1 || i / rows == 10 || i / rows == 11
+        )
+        {
+            temp_board[i] = out_of_bounds;
+        }
+        else
+        {
+            temp_board[i] = index_counter;
+            index_counter++;
+        }
+    }
+    return temp_board;
+}();
 
 class Board
 {
@@ -60,6 +84,7 @@ class Board
     friend bool is_square_attacked(const Board& board, int square, int attacking_colour);
     friend History make_move(Board& board, const Move& move);
     friend void undo_move(Board& board, const Move& move, const History& history);
+    friend int evaluate (const Board& board, int colour);
 
     public:
     void setup_default_start_position()
@@ -74,18 +99,22 @@ class Board
                 if (row == 2)
                 {
                     board[i] = default_piece_order[column - 2];
+                    bitboards.bitboards[board[i] + bitboard_offset] |= (1ULL << board_144_to_64[i]);
                 }
                 else if (row == 3)
                 {
                     board[i] = w_pawn;
+                    bitboards.bitboards[board[i] + bitboard_offset] |= (1ULL << board_144_to_64[i]);
                 }
                 else if (row == 8)
                 {
                     board[i] = b_pawn;
+                    bitboards.bitboards[board[i] + bitboard_offset] |= (1ULL << board_144_to_64[i]);
                 }
                 else if (row == 9)
                 {
                     board[i] = -default_piece_order[column - 2];
+                    bitboards.bitboards[board[i] + bitboard_offset] |= (1ULL << board_144_to_64[i]);
                 }
                 else
                 {

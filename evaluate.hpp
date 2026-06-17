@@ -4,6 +4,8 @@
 #include "board.hpp"
 #include "pieces.hpp"
 #include "bitboard.hpp"
+#include "PSTs.hpp"
+#include "colour.hpp"
 #include <array>
 #include <bit>
 
@@ -26,13 +28,25 @@ inline static constexpr std::array<int, 13> pieces
 int evaluate (const Board& board, int colour)
 {
     int evaluation{};
-    for (size_t i{}; i < pieces.size(); i++) // Material evaluation
+    for (size_t i{}; i < pieces.size(); i++)
     {
         int piece{ pieces[i] };
-        evaluation += piece_values[piece + piece_value_offset] * std::popcount(board.bitboards.bitboards[piece + bitboard_offset]);
-    }
+        int piece_colour = (piece > 0) ? white : black;
 
-    // Piece-square table evaluations
+        // Material evaluation
+        evaluation += piece_values[piece + piece_value_offset] * std::popcount(board.bitboards.bitboards[piece + bitboard_offset]);
+
+        // Piece-square table evaluations
+        PST mg_table{ mg_PSTs[piece + table_offset] };
+        Bitboard piece_bitboard{ board.bitboards.bitboards[piece + bitboard_offset] };
+        while (piece_bitboard)
+        {
+            int index{ std::countr_zero(piece_bitboard) };
+
+            evaluation += mg_table[index] * piece_colour;
+            piece_bitboard ^= (1ULL << index);
+        }
+    }
     
     return evaluation * colour;
 }

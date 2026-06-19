@@ -5,6 +5,7 @@
 #include "evaluate.hpp"
 #include "generate.hpp"
 #include "move.hpp"
+#include "pieces.hpp"
 
 int quiescence(Board& board, int alpha, int beta, int colour)
 {
@@ -26,7 +27,7 @@ int quiescence(Board& board, int alpha, int beta, int colour)
     for (int i{}; i < legal_moves.move_count; i++)
     {
         Move move{ legal_moves.moves[i] };
-        if (move.is_legal && (move.captured_piece != empty || move.move_type == en_passant_move))
+        if (move.is_legal && (move.captured_piece != empty || move.move_type == en_passant_move || std::abs(move.promotion_piece) == queen))
         {
             History history{ make_move(board, move) };
             int score{ -quiescence(board, -beta, -alpha, -colour) };

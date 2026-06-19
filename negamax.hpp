@@ -37,7 +37,7 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth)
                 }
             }
 
-            if (score >= beta)
+            if (score >= beta) // Prune because the opponent wouldn't let that position happen
             {
                 return best_score;
             }

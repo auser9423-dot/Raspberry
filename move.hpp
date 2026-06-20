@@ -6,9 +6,19 @@
 #include "colour.hpp"
 #include "pieces.hpp"
 #include <array>
+#include <cmath>
 
 // Constants 
 inline static constexpr int max_moves{ 218 };
+inline static constexpr std::array<int, 13> piece_values
+{
+    // b_king, b_queen, b_rook, b_bishop, b_knight, b_pawn, garbage
+       -10000, -1000,   -525,   -350,     -325,     -100,   0,
+    // w_pawn, w_knight, w_bishop, w_rook, w_queen, w_king
+       100,    325,      350,      525,    1000,    10000
+};
+
+inline static constexpr int piece_value_offset{ 6 };
 
 // Move types
 inline static constexpr int en_passant_move{ 6 };
@@ -70,10 +80,15 @@ inline History make_move(Board& board, const Move& move)
     board.bitboards.bitboards[move.piece + bitboard_offset] ^= (1ULL << board_144_to_64[move.start]);
     board.bitboards.bitboards[move.captured_piece + bitboard_offset] ^= (1ULL << board_144_to_64[move.end]);
 
+    board.current_material -= piece_values[std::abs(move.captured_piece) + piece_value_offset];
+
     if (move.move_type == promotion_move || move.move_type == capture_promotion_move)
     {
         board.board[move.end] = move.promotion_piece;
         board.bitboards.bitboards[move.promotion_piece + bitboard_offset] |= (1ULL << board_144_to_64[move.end]);
+
+        board.current_material -= piece_values[std::abs(move.piece) + piece_value_offset];
+        board.current_material += piece_values[std::abs(move.promotion_piece) + piece_value_offset];
     }
     else
     {
@@ -151,6 +166,8 @@ inline History make_move(Board& board, const Move& move)
         {
             board.board[move.end + (rows * -colour)] = empty;
             board.bitboards.bitboards[(pawn * -colour) + bitboard_offset] ^= (1ULL << board_144_to_64[move.end + (rows * -colour)]);
+
+            board.current_material -= piece_values[pawn + piece_value_offset];
         }
         else if (move.move_type == double_push_move)
         {
@@ -205,9 +222,14 @@ inline void undo_move(Board& board, const Move& move, const History& history)
 
     board.bitboards.bitboards[move.captured_piece + bitboard_offset] |= (1ULL << board_144_to_64[move.end]);
 
+    board.current_material += piece_values[std::abs(move.captured_piece) + piece_value_offset];
+
     if (move.move_type == capture_promotion_move || move.move_type == promotion_move)
     {
         board.bitboards.bitboards[move.promotion_piece + bitboard_offset] ^= (1ULL << board_144_to_64[move.end]);
+
+        board.current_material += piece_values[std::abs(move.piece) + piece_value_offset];
+        board.current_material -= piece_values[std::abs(move.promotion_piece) + piece_value_offset];
     }
     else
     {
@@ -258,6 +280,8 @@ inline void undo_move(Board& board, const Move& move, const History& history)
     {
         board.board[move.end + (rows * -colour)] = pawn * -colour;
         board.bitboards.bitboards[(pawn * -colour) + bitboard_offset] |= (1ULL << board_144_to_64[move.end + (rows * -colour)]);
+
+        board.current_material += piece_values[pawn + piece_value_offset];
     }
 }
 

@@ -40,6 +40,8 @@ inline static constexpr std::array<std::array<int, 6>, 6> MVV_LVA
     }
 };
 
+inline static constexpr int start_material{ (piece_values[queen + piece_value_offset] * 2) + (piece_values[rook + piece_value_offset] * 4) + (piece_values[bishop + piece_value_offset] * 4) + (piece_values[knight + piece_value_offset] * 4) + (piece_values[pawn + piece_value_offset] * 8 * 2) };
+
 void order_moves(Moves& moves)
 {
     std::sort(moves.moves.begin(), moves.moves.begin() + moves.move_count, [](Move a, Move b)
@@ -53,6 +55,9 @@ void order_moves(Moves& moves)
 int evaluate (const Board& board, int colour)
 {
     int evaluation{};
+    double ratio{ static_cast<double>(board.current_material) / start_material };
+    ratio = std::clamp(ratio, 0.0, 1.0);
+
     for (size_t i{}; i < pieces.size(); i++)
     {
         int piece{ pieces[i] };
@@ -63,12 +68,13 @@ int evaluate (const Board& board, int colour)
 
         // Piece-square table evaluations
         PST mg_table{ mg_PSTs[piece + table_offset] };
+        PST eg_table{ eg_PSTs[piece + table_offset] };
         Bitboard piece_bitboard{ board.bitboards.bitboards[piece + bitboard_offset] };
         while (piece_bitboard)
         {
             int index{ std::countr_zero(piece_bitboard) };
 
-            evaluation += mg_table[index] * piece_colour;
+            evaluation += ((mg_table[index] * ratio) + (eg_table[index] * (1 - ratio))) * piece_colour;
             piece_bitboard ^= (1ULL << index);
         }
     }

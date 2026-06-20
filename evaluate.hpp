@@ -7,6 +7,7 @@
 #include "PSTs.hpp"
 #include "colour.hpp"
 #include "move.hpp"
+#include "bitmasks.hpp"
 #include <array>
 #include <bit>
 #include <algorithm>
@@ -52,21 +53,53 @@ int evaluate (const Board& board, int colour)
     for (size_t i{}; i < pieces.size(); i++)
     {
         int piece{ pieces[i] };
-        int piece_colour = (piece > 0) ? white : black;
-
-        // Material evaluation
-        evaluation += piece_values[piece + piece_value_offset] * std::popcount(board.bitboards.bitboards[piece + bitboard_offset]);
-
-        // Piece-square table evaluations
-        PST mg_table{ mg_PSTs[piece + table_offset] };
-        PST eg_table{ eg_PSTs[piece + table_offset] };
-        Bitboard piece_bitboard{ board.bitboards.bitboards[piece + bitboard_offset] };
-        while (piece_bitboard)
+        if (piece != empty)
         {
-            int index{ std::countr_zero(piece_bitboard) };
+            int piece_colour = (piece > 0) ? white : black;
 
-            evaluation += ((mg_table[index] * ratio) + (eg_table[index] * (1 - ratio))) * piece_colour;
-            piece_bitboard ^= (1ULL << index);
+            // Material evaluation
+            evaluation += piece_values[piece + piece_value_offset] * std::popcount(board.bitboards.bitboards[piece + bitboard_offset]);
+
+            // Piece-square table evaluations
+            PST mg_table{ mg_PSTs[piece + table_offset] };
+            PST eg_table{ eg_PSTs[piece + table_offset] };
+            Bitboard piece_bitboard{ board.bitboards.bitboards[piece + bitboard_offset] };
+            while (piece_bitboard)
+            {
+                int index{ std::countr_zero(piece_bitboard) };
+
+                evaluation += ((mg_table[index] * ratio) + (eg_table[index] * (1 - ratio))) * piece_colour;
+                piece_bitboard ^= (1ULL << index);
+            }
+
+            if (std::abs(piece) == pawn)
+            {
+                std::array<uint64_t, 64> passed_pawn_mask = (piece_colour == white) ? w_passed_pawn_mask : b_passed_pawn_mask;
+
+                Bitboard pawn_bitboard{ board.bitboards.bitboards[piece + bitboard_offset] };
+                while (pawn_bitboard)
+                {
+                    // Passed pawn bonus
+                    int index{ std::countr_zero(pawn_bitboard) };
+                    if ((passed_pawn_mask[index] & board.bitboards.bitboards[-piece + bitboard_offset]) == 0)
+                    {
+                        evaluation += 75 * piece_colour;
+                    }
+
+                    pawn_bitboard ^= (1ULL << index);
+                }
+
+                // Doubled pawn punishment
+                pawn_bitboard = board.bitboards.bitboards[piece + bitboard_offset];
+                for (int j{}; j < 8; j++)
+                {
+                    int stacked_pawns{ std::popcount(stacked_pawns_mask[j] & pawn_bitboard) };
+                    if (stacked_pawns > 1)
+                    {
+                        evaluation -= 15 * stacked_pawns * piece_colour;
+                    }
+                }
+            }
         }
     }
     

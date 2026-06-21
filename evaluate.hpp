@@ -83,7 +83,7 @@ int evaluate (const Board& board, int colour)
                     int index{ std::countr_zero(pawn_bitboard) };
                     if ((passed_pawn_mask[index] & board.bitboards.bitboards[-piece + bitboard_offset]) == 0)
                     {
-                        evaluation += 75 * piece_colour;
+                        evaluation += 35 * piece_colour;
                     }
 
                     pawn_bitboard ^= (1ULL << index);

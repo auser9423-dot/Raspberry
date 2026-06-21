@@ -32,7 +32,7 @@ inline static constexpr std::array<std::array<int, 6>, 6> MVV_LVA
     }
 };
 
-inline static constexpr int start_material{ (piece_values[queen + piece_value_offset] * 2) + (piece_values[rook + piece_value_offset] * 4) + (piece_values[bishop + piece_value_offset] * 4) + (piece_values[knight + piece_value_offset] * 4) + (piece_values[pawn + piece_value_offset] * 8 * 2) };
+inline static constexpr int start_material{ (piece_values[queen + piece_value_offset] * 2) + (piece_values[rook + piece_value_offset] * 4) + (piece_values[bishop + piece_value_offset] * 4) + (piece_values[knight + piece_value_offset] * 4) };
 
 void order_moves(Moves& moves)
 {

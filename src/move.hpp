@@ -276,4 +276,17 @@ inline void undo_move(Board& board, const Move& move, const History& history)
     }
 }
 
+inline int make_null_move(Board& board)
+{
+    int en_passant_square{ board.en_passant_square };
+
+    board.en_passant_square = no_en_passant;
+    return en_passant_square;
+}
+
+inline void undo_null_move(Board& board, int en_passant_square)
+{
+    board.en_passant_square = en_passant_square;
+}
+
 #endif

@@ -178,6 +178,9 @@ class Board
     friend History make_move(Board& board, const Move& move);
     friend void undo_move(Board& board, const Move& move, const History& history);
     friend int evaluate (const Board& board, int colour);
+    friend int make_null_move(Board& board);
+    friend void undo_null_move(Board& board, int en_passant_square);
+    friend inline int negamax(Board& board, int alpha, int beta, int colour, int depth, bool is_null_move);
 
     public:
     void setup_default_start_position()

@@ -24,4 +24,4 @@ int main()
     return 0;
 }
 
-// g++ -O3 -std=c++20 perft.cpp -o perft
+// g++ -O3 -std=c++20 ./src/uci.cpp -o perft

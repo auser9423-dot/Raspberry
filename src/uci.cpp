@@ -149,4 +149,4 @@ int main()
     return 0;
 }
 
-// g++ -O3 -std=c++20 uci.cpp -o raspberry
+// g++ -O3 -std=c++20 ./src/uci.cpp -o raspberry

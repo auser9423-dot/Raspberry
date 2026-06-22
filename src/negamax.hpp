@@ -34,6 +34,8 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
     Moves legal_moves{ generate_legal_moves(board, colour) };
     order_moves(legal_moves);
 
+    int moves_played{};
+
     for (int i{}; i < legal_moves.move_count; i++)
     {
         Move move{ legal_moves.moves[i] };
@@ -56,8 +58,21 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
             {
                 return best_score;
             }
+
+            moves_played++;
         }
     }
+
+    if (moves_played == 0)
+    {
+        if (is_square_attacked(board, king_position, -colour))
+        {
+            return negative_infinity + (100 - depth);
+        }
+
+        return 0;
+    }
+
     return best_score;
 }
 

@@ -97,6 +97,16 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
             {
                 best_move = move;
                 best_score = score;
+
+                if (score > alpha)
+                {
+                    alpha = score;
+                }
+            }
+
+            if (score >= beta)
+            {
+                break; 
             }
         }
     }

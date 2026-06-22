@@ -34,13 +34,28 @@ inline static constexpr std::array<std::array<int, 6>, 6> MVV_LVA
 
 inline static constexpr int start_material{ (piece_values[queen + piece_value_offset] * 2) + (piece_values[rook + piece_value_offset] * 4) + (piece_values[bishop + piece_value_offset] * 4) + (piece_values[knight + piece_value_offset] * 4) };
 
-void order_moves(Moves& moves)
+void order_moves(Moves& moves, Move& hash_move)
 {
-    std::sort(moves.moves.begin(), moves.moves.begin() + moves.move_count, [](Move a, Move b)
+    for (int i{}; i < moves.move_count; i++)
     {
-        int score_a = (a.captured_piece == empty) ? 0 : MVV_LVA[std::abs(a.captured_piece) - 1][std::abs(a.piece) - 1];
-        int score_b = (b.captured_piece == empty) ? 0 : MVV_LVA[std::abs(b.captured_piece) - 1][std::abs(b.piece) - 1];
-        return score_a > score_b;
+        Move& move{ moves.moves[i] };
+        if (move.piece != none && move.start == hash_move.start && move.end == hash_move.end && move.promotion_piece == hash_move.promotion_piece)
+        {
+            move.score = 1000000;
+        }
+        else if (move.move_type == en_passant_move)
+        {
+            move.score = MVV_LVA[0][0];
+        }
+        else if (move.captured_piece != none)
+        {
+            move.score = (move.captured_piece == empty) ? 0 : MVV_LVA[std::abs(move.captured_piece) - 1][std::abs(move.piece) - 1];
+        }
+    }
+
+    std::sort(moves.moves.begin(), moves.moves.begin() + moves.move_count, [](const Move& a, const Move& b)
+    {
+        return a.score > b.score;
     });
 }
 

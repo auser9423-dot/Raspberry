@@ -30,6 +30,7 @@ struct Move
     int piece{};
     int captured_piece{};
     bool is_legal{};
+    int score{};
 };
 
 struct Moves

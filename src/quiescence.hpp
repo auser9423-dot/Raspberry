@@ -21,8 +21,19 @@ int quiescence(Board& board, int alpha, int beta, int colour)
         alpha = best_score;
     }
 
+    TTEntry& TT_entry{ TT[board.zobrist_position % TT_size] };
+    Move hash_move{};
+
+    if (TT_entry.key == board.zobrist_position)
+    {
+        if (TT_entry.best_move.piece != none)
+        {
+            hash_move = TT_entry.best_move;
+        }
+    }
+
     Moves legal_moves{ generate_legal_moves(board, colour) };
-    order_moves(legal_moves);
+    order_moves(legal_moves, hash_move);
     
     for (int i{}; i < legal_moves.move_count; i++)
     {

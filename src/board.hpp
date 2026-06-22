@@ -232,7 +232,9 @@ class Board
     friend int evaluate (const Board& board, int colour);
     friend NullHistory make_null_move(Board& board);
     friend void undo_null_move(Board& board, NullHistory& null_history);
-    friend inline int negamax(Board& board, int alpha, int beta, int colour, int depth, bool is_null_move);
+    friend int negamax(Board& board, int alpha, int beta, int colour, int depth, bool is_null_move);
+    friend Move search(Board& board, int alpha, int beta, int colour, int depth);
+    friend int quiescence(Board& board, int alpha, int beta, int colour);
 
     public:
     void setup_default_start_position()

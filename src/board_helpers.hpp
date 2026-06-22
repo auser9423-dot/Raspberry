@@ -17,5 +17,7 @@ int evaluate (const Board& board, int colour);
 int negamax(Board& board, int alpha, int beta, int colour, int depth, bool is_null_move);
 NullHistory make_null_move(Board& board);
 void undo_null_move(Board& board, NullHistory& null_history);
+Move search(Board& board, int alpha, int beta, int colour, int depth);
+int quiescence(Board& board, int alpha, int beta, int colour);
 
 #endif

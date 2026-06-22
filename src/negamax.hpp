@@ -14,16 +14,27 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
     int original_alpha{ alpha };
 
     TTEntry& TT_entry{ TT[board.zobrist_position % TT_size] };
-    if (TT_entry.key == board.zobrist_position && TT_entry.depth >= depth)
+
+    Move hash_move{};
+
+    if (TT_entry.key == board.zobrist_position)
     {
-        if
-        (
-            (TT_entry.flag == exact_flag)
-            || (TT_entry.flag == lower_bound_flag && TT_entry.score >= beta)
-            || (TT_entry.flag == upper_bound_flag && TT_entry.score <= alpha)
-        )
+        if (TT_entry.depth >= depth)
         {
-            return TT_entry.score;
+            if
+            (
+                (TT_entry.flag == exact_flag)
+                || (TT_entry.flag == lower_bound_flag && TT_entry.score >= beta)
+                || (TT_entry.flag == upper_bound_flag && TT_entry.score <= alpha)
+            )
+            {
+                return TT_entry.score;
+            }
+        }
+
+        if (TT_entry.best_move.piece != none)
+        {
+            hash_move = TT_entry.best_move;
         }
     }
 
@@ -49,7 +60,7 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
     }
 
     Moves legal_moves{ generate_legal_moves(board, colour) };
-    order_moves(legal_moves);
+    order_moves(legal_moves, hash_move);
 
     int moves_played{};
     Move best_move{};
@@ -87,28 +98,33 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
     {
         if (is_square_attacked(board, king_position, -colour))
         {
-            return negative_infinity + (100 - depth);
+            best_score = negative_infinity + (100 - depth);
         }
-
-        return 0;
+        else
+        {
+            best_score = 0;
+        }
     }
 
-    TT_entry.best_move = best_move;
-    TT_entry.score = best_score;
-    TT_entry.depth = depth;
-    TT_entry.key = board.zobrist_position;
+    if (depth >= TT_entry.depth)
+    {
+        TT_entry.best_move = best_move;
+        TT_entry.score = best_score;
+        TT_entry.depth = depth;
+        TT_entry.key = board.zobrist_position;
 
-    if (best_score <= original_alpha)
-    {
-        TT_entry.flag = upper_bound_flag;
-    }
-    else if (best_score >= beta)
-    {
-        TT_entry.flag = lower_bound_flag;
-    }
-    else
-    {
-        TT_entry.flag = exact_flag;
+        if (best_score <= original_alpha)
+        {
+            TT_entry.flag = upper_bound_flag;
+        }
+        else if (best_score >= beta)
+        {
+            TT_entry.flag = lower_bound_flag;
+        }
+        else
+        {
+            TT_entry.flag = exact_flag;
+        }
     }
 
     return best_score;
@@ -120,8 +136,19 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
     Move best_move{};
     int best_score{ negative_infinity };
 
+    TTEntry& TT_entry{ TT[board.zobrist_position % TT_size] };
 
-    order_moves(legal_moves);
+    Move hash_move{};
+
+    if (TT_entry.key == board.zobrist_position)
+    {
+        if (TT_entry.best_move.piece != none)
+        {
+            hash_move = TT_entry.best_move;
+        }
+    }
+
+    order_moves(legal_moves, hash_move);
     for (int i{}; i < legal_moves.move_count; i++)
     {
         Move move{ legal_moves.moves[i] };

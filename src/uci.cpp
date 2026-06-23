@@ -28,21 +28,6 @@ int promotion_piece_to_value(char promotion_piece)
     }
 }
 
-char promotion_value_to_piece(int promotion_piece)
-{
-    switch (std::abs(promotion_piece))
-    {
-        case knight:
-            return 'n';
-        case bishop:
-            return 'b';
-        case rook:
-            return 'r';
-        case queen:
-            return 'q';
-    }
-}
-
 int main()
 {
     Board board{};
@@ -96,7 +81,7 @@ int main()
                 }
                 else if (word == "go")
                 {
-                    int depth{ 7 };
+                    int depth{ 8 };
                     int alpha{ negative_infinity };
                     int beta{ -alpha };
 

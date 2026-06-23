@@ -5,6 +5,8 @@
 #include "quiescence.hpp"
 #include "evaluate.hpp"
 #include "transposition_table.hpp"
+#include <iostream>
+#include <string>
 
 inline static constexpr int negative_infinity{ -1000000000 };
 inline static constexpr int null_move_reduction{ 2 };
@@ -130,51 +132,87 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
     return best_score;
 }
 
+inline char promotion_value_to_piece(int promotion_piece)
+{
+    switch (std::abs(promotion_piece))
+    {
+        case knight:
+            return 'n';
+        case bishop:
+            return 'b';
+        case rook:
+            return 'r';
+        case queen:
+            return 'q';
+    }
+}
+
 inline Move search(Board& board, int alpha, int beta, int colour, int depth)
 {
-    Moves legal_moves{ generate_legal_moves(board, colour) };
     Move best_move{};
-    int best_score{ negative_infinity };
+    Moves legal_moves{ generate_legal_moves(board, colour) };
 
-    TTEntry& TT_entry{ TT[board.zobrist_position % TT_size] };
-
-    Move hash_move{};
-
-    if (TT_entry.key == board.zobrist_position)
+    for (int current_depth{ 1 }; current_depth <= depth; current_depth++)
     {
-        if (TT_entry.best_move.piece != none)
-        {
-            hash_move = TT_entry.best_move;
-        }
-    }
+        int best_score{ negative_infinity };
 
-    order_moves(legal_moves, hash_move);
-    for (int i{}; i < legal_moves.move_count; i++)
-    {
-        Move move{ legal_moves.moves[i] };
-        if (move.is_legal)
-        {
-            History history{ make_move(board, move) };
-            int score{ -negamax(board, -beta, -alpha, -colour, depth - 1, false) };
-            undo_move(board, move, history);
+        alpha = negative_infinity;
+        beta = -negative_infinity;
 
-            if (score > best_score)
+        TTEntry& TT_entry{ TT[board.zobrist_position % TT_size] };
+
+        Move hash_move{};
+
+        if (TT_entry.key == board.zobrist_position)
+        {
+            if (TT_entry.best_move.piece != none)
             {
-                best_move = move;
-                best_score = score;
+                hash_move = TT_entry.best_move;
+            }
+        }
 
-                if (score > alpha)
+        order_moves(legal_moves, hash_move);
+        for (int i{}; i < legal_moves.move_count; i++)
+        {
+            Move move{ legal_moves.moves[i] };
+            if (move.is_legal)
+            {
+                History history{ make_move(board, move) };
+                int score{ -negamax(board, -beta, -alpha, -colour, current_depth - 1, false) };
+                undo_move(board, move, history);
+
+                if (score > best_score)
                 {
-                    alpha = score;
+                    best_move = move;
+                    best_score = score;
+
+                    if (score > alpha)
+                    {
+                        alpha = score;
+                    }
+                }
+
+                if (score >= beta)
+                {
+                    break; 
                 }
             }
-
-            if (score >= beta)
-            {
-                break; 
-            }
         }
+
+        TT_entry.best_move = best_move;
+        TT_entry.score = best_score;
+        TT_entry.depth = current_depth;
+        TT_entry.key = board.zobrist_position;
+        TT_entry.flag = exact_flag;
+
+        std::string best_move_converted{ index_to_square[best_move.start] + index_to_square[best_move.end] };
+        if (best_move.promotion_piece != none)
+        {
+            best_move_converted += promotion_value_to_piece(best_move.promotion_piece);
+        }
+        std::cout << "info" << " depth " << current_depth << " score cp " << best_score << " pv " << best_move_converted << std::endl;
     }
+
     return best_move;
 }
 

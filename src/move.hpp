@@ -51,6 +51,7 @@ struct History
     bool white_king_moved{};
     bool black_king_moved{};
     uint64_t zobrist_position{};
+    int moves_since_pawn_move{};
 };
 
 struct NullHistory

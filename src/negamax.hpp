@@ -13,6 +13,29 @@ inline static constexpr int null_move_reduction{ 2 };
 
 inline int negamax(Board& board, int alpha, int beta, int colour, int depth, bool is_null_move)
 {
+    if (board.moves_since_pawn_move >= 100)
+    {
+        return 0;
+    }
+
+    if (!is_null_move)
+    {
+        int same_position_counter{};
+        int limit{ std::max(0, static_cast<int>(board.previous_positions.size()) - board.moves_since_pawn_move - 1) };
+
+        for (int i{ static_cast<int>(board.previous_positions.size()) - 1 }; i >= limit; i -= 2)
+        {
+            if (board.previous_positions[i] == board.zobrist_position)
+            {
+                same_position_counter++;
+                if (same_position_counter == 3)
+                {
+                    return 0;
+                }
+            }
+        }
+    }
+
     int original_alpha{ alpha };
 
     TTEntry& TT_entry{ TT[board.zobrist_position % TT_size] };
@@ -73,7 +96,9 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
         if (move.is_legal)
         {
             History history{ make_move(board, move) };
+
             int score{ -negamax(board, -beta, -alpha, -colour, depth - 1, false) };
+
             undo_move(board, move, history);
 
             moves_played++;

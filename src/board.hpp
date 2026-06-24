@@ -9,6 +9,7 @@
 #include <string>
 #include <random>
 #include <cmath>
+#include <vector>
 
 // Constants
 inline static constexpr int white_king_side_castle_right{};
@@ -224,6 +225,9 @@ class Board
 
     static constexpr std::array<int, 8> default_piece_order{rook, knight, bishop, queen, king, bishop, knight, rook};
 
+    std::vector<uint64_t> previous_positions{};
+    int moves_since_pawn_move{};
+
     friend Moves generate_pseudo_moves(const Board& board, int colour);
     friend Moves generate_legal_moves(Board& board, int colour);
     friend bool is_square_attacked(const Board& board, int square, int attacking_colour);
@@ -287,6 +291,8 @@ class Board
         }
 
         zobrist_position ^= TT_white;
+
+        previous_positions.push_back(zobrist_position);
     }
 };
 
@@ -304,6 +310,7 @@ inline History make_move(Board& board, const Move& move)
     history.white_king_moved = board.white_king_moved;
     history.black_king_moved = board.black_king_moved;
     history.zobrist_position = board.zobrist_position;
+    history.moves_since_pawn_move = board.moves_since_pawn_move;
 
     board.en_passant_square = no_en_passant;
 
@@ -520,6 +527,17 @@ inline History make_move(Board& board, const Move& move)
 
     board.zobrist_position ^= TT_white;
 
+    board.previous_positions.push_back(board.zobrist_position);
+
+    if (std::abs(move.piece) == pawn || move.captured_piece != empty)
+    {
+        board.moves_since_pawn_move = 0;
+    }
+    else
+    {
+        board.moves_since_pawn_move++;
+    }
+
     return history;
 }
 
@@ -535,6 +553,7 @@ inline void undo_move(Board& board, const Move& move, const History& history)
     board.white_king_moved = history.white_king_moved;
     board.black_king_moved = history.black_king_moved;
     board.zobrist_position = history.zobrist_position;
+    board.moves_since_pawn_move = history.moves_since_pawn_move;
 
     int colour = (move.piece > 0) ? white : black;
 
@@ -604,6 +623,8 @@ inline void undo_move(Board& board, const Move& move, const History& history)
 
         board.current_material += piece_values[pawn + piece_value_offset];
     }
+
+    board.previous_positions.pop_back();
 }
 
 inline NullHistory make_null_move(Board& board)

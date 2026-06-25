@@ -98,10 +98,21 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
         {
             History history{ make_move(board, move) };
 
-            int score{ -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false) };
+            int score{};
+            if (moves_played == 0)
+            {
+                score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+            }
+            else // PVS
+            {
+                score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false);
+                if (score > alpha && score < beta)
+                {
+                    score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+                }
+            }
 
             undo_move(board, move, history);
-
             moves_played++;
 
             if (score > best_score)
@@ -218,6 +229,7 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
             }
         }
 
+        int moves_played{};
         order_moves(board, legal_moves, hash_move, colour, 0);
         for (int i{}; i < legal_moves.move_count; i++)
         {
@@ -225,8 +237,23 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
             if (move.is_legal)
             {
                 History history{ make_move(board, move) };
-                int score{ -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false) };
+
+                int score{};
+                if (moves_played == 0)
+                {
+                    score = -negamax(board, -beta, -alpha, -colour, depth - 1, 0, false);
+                }
+                else // PVS
+                {
+                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, 0, false);
+                    if (score > alpha && score < beta)
+                    {
+                        score = -negamax(board, -beta, -alpha, -colour, depth - 1, 0, false);
+                    }
+                }
+
                 undo_move(board, move, history);
+                moves_played++;
 
                 if (score > best_score)
                 {

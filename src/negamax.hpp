@@ -10,6 +10,8 @@
 
 inline static constexpr int negative_infinity{ -1000000000 };
 inline static constexpr int null_move_reduction{ 2 };
+inline static constexpr int negamax_late_move_reduction{ 2 };
+inline static constexpr int search_late_move_reduction{ 1 };
 inline static constexpr int max_history{ 550000 };
 
 inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int ply, bool is_null_move)
@@ -73,7 +75,9 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
 
     // Null move pruning
     int king_position = (colour == white) ? board.white_king_position : board.black_king_position;
-    if (board.current_material > 0 && depth >= 4 && !is_square_attacked(board, king_position, -colour) && !is_null_move)
+    bool is_in_check{ is_square_attacked(board, king_position, -colour) };
+
+    if (board.current_material > 0 && depth >= 4 && !is_in_check && !is_null_move)
     {
         NullHistory null_history{ make_null_move(board) };
         int null_move_score{ -negamax(board, -beta, -(beta - 1), -colour, depth - 1 - null_move_reduction, ply + 1, true) };
@@ -105,10 +109,35 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
             }
             else // PVS
             {
-                score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false);
-                if (score > alpha && score < beta)
+                int opponent_king_position = (colour == white) ? board.black_king_position : board.white_king_position;
+
+                if // LMR possible
+                (
+                    depth >= 4 
+                    && moves_played >= 4 
+                    && move.captured_piece == none 
+                    && move.promotion_piece == none
+                    && !is_in_check
+                    && !is_square_attacked(board, opponent_king_position, colour) // !is_opponent_in_check
+                )
                 {
-                    score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1 - negamax_late_move_reduction, ply + 1, false);
+                    if (score > alpha)
+                    {
+                        score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false);
+                        if (score > alpha && score < beta)
+                        {
+                            score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+                        }
+                    }
+                }
+                else
+                {
+                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false);
+                    if (score > alpha && score < beta)
+                    {
+                        score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+                    }
                 }
             }
 
@@ -166,25 +195,22 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
         }
     }
 
-    if (depth >= TT_entry.depth)
-    {
-        TT_entry.best_move = best_move;
-        TT_entry.score = best_score;
-        TT_entry.depth = depth;
-        TT_entry.key = board.zobrist_position;
+    TT_entry.best_move = best_move;
+    TT_entry.score = best_score;
+    TT_entry.depth = depth;
+    TT_entry.key = board.zobrist_position;
 
-        if (best_score <= original_alpha)
-        {
-            TT_entry.flag = upper_bound_flag;
-        }
-        else if (best_score >= beta)
-        {
-            TT_entry.flag = lower_bound_flag;
-        }
-        else
-        {
-            TT_entry.flag = exact_flag;
-        }
+    if (best_score <= original_alpha)
+    {
+        TT_entry.flag = upper_bound_flag;
+    }
+    else if (best_score >= beta)
+    {
+        TT_entry.flag = lower_bound_flag;
+    }
+    else
+    {
+        TT_entry.flag = exact_flag;
     }
 
     return best_score;
@@ -210,12 +236,17 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
     Move best_move{};
     Moves legal_moves{ generate_legal_moves(board, colour) };
 
+    int king_position = (colour == white) ? board.white_king_position : board.black_king_position;
+    bool is_in_check{ is_square_attacked(board, king_position, -colour) };
+
     for (int current_depth{ 1 }; current_depth <= depth; current_depth++)
     {
         int best_score{ negative_infinity };
 
         alpha = negative_infinity;
         beta = -negative_infinity;
+
+        int original_alpha{ alpha };
 
         TTEntry& TT_entry{ TT[board.zobrist_position % TT_size] };
 
@@ -241,14 +272,39 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
                 int score{};
                 if (moves_played == 0)
                 {
-                    score = -negamax(board, -beta, -alpha, -colour, depth - 1, 0, false);
+                    score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false);
                 }
                 else // PVS
                 {
-                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, 0, false);
-                    if (score > alpha && score < beta)
+                    int opponent_king_position = (colour == white) ? board.black_king_position : board.white_king_position;
+
+                    if // LMR possible
+                    (
+                        current_depth >= 4 
+                        && moves_played >= 4 
+                        && move.captured_piece == none 
+                        && move.promotion_piece == none
+                        && !is_in_check
+                        && !is_square_attacked(board, opponent_king_position, colour)
+                    )
                     {
-                        score = -negamax(board, -beta, -alpha, -colour, depth - 1, 0, false);
+                        score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1 - search_late_move_reduction, 0, false);
+                        if (score > alpha)
+                        {
+                            score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1, 0, false);
+                            if (score > alpha && score < beta)
+                            {
+                                score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1, 0, false);
+                        if (score > alpha && score < beta)
+                        {
+                            score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false);
+                        }
                     }
                 }
 
@@ -277,7 +333,19 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
         TT_entry.score = best_score;
         TT_entry.depth = current_depth;
         TT_entry.key = board.zobrist_position;
-        TT_entry.flag = exact_flag;
+
+        if (best_score <= original_alpha)
+        {
+            TT_entry.flag = upper_bound_flag;
+        }
+        else if (best_score >= beta)
+        {
+            TT_entry.flag = lower_bound_flag;
+        }
+        else
+        {
+            TT_entry.flag = exact_flag;
+        }
 
         std::string best_move_converted{ index_to_square[best_move.start] + index_to_square[best_move.end] };
         if (best_move.promotion_piece != none)

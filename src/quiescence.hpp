@@ -33,7 +33,7 @@ int quiescence(Board& board, int alpha, int beta, int colour)
     }
 
     Moves legal_moves{ generate_legal_moves(board, colour) };
-    order_moves(legal_moves, hash_move);
+    order_moves(board, legal_moves, hash_move, colour, 0);
     
     for (int i{}; i < legal_moves.move_count; i++)
     {

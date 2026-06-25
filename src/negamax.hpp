@@ -10,8 +10,9 @@
 
 inline static constexpr int negative_infinity{ -1000000000 };
 inline static constexpr int null_move_reduction{ 2 };
+inline static constexpr int max_history{ 550000 };
 
-inline int negamax(Board& board, int alpha, int beta, int colour, int depth, bool is_null_move)
+inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int ply, bool is_null_move)
 {
     if (board.moves_since_pawn_move >= 100)
     {
@@ -75,7 +76,7 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
     if (board.current_material > 0 && depth >= 4 && !is_square_attacked(board, king_position, -colour) && !is_null_move)
     {
         NullHistory null_history{ make_null_move(board) };
-        int null_move_score{ -negamax(board, -beta, -(beta - 1), -colour, depth - 1 - null_move_reduction, true) };
+        int null_move_score{ -negamax(board, -beta, -(beta - 1), -colour, depth - 1 - null_move_reduction, ply + 1, true) };
         undo_null_move(board, null_history);
 
         if (null_move_score >= beta)
@@ -85,19 +86,19 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
     }
 
     Moves legal_moves{ generate_legal_moves(board, colour) };
-    order_moves(legal_moves, hash_move);
+    order_moves(board, legal_moves, hash_move, colour, ply);
 
     int moves_played{};
     Move best_move{};
 
     for (int i{}; i < legal_moves.move_count; i++)
     {
-        Move move{ legal_moves.moves[i] };
+        Move& move{ legal_moves.moves[i] };
         if (move.is_legal)
         {
             History history{ make_move(board, move) };
 
-            int score{ -negamax(board, -beta, -alpha, -colour, depth - 1, false) };
+            int score{ -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false) };
 
             undo_move(board, move, history);
 
@@ -116,6 +117,27 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, boo
 
             if (score >= beta) // Prune because the opponent wouldn't let that position happen
             {
+                // Killer moves update
+                if (move.captured_piece == none && move.promotion_piece == none && move.move_type != en_passant_move)
+                {
+                    Move& killer_move_1{ board.killer_table[ply][0] };
+                    if (killer_move_1.start != move.start || killer_move_1.end != move.end || killer_move_1.promotion_piece != move.promotion_piece)
+                    {
+                        Move& killer_move_2{ board.killer_table[ply][1] };
+                        killer_move_2 = killer_move_1;
+                        killer_move_1 = move;
+                    }
+                }
+
+                // History moves update
+                if (move.captured_piece == none && move.promotion_piece == none && move.move_type != en_passant_move)
+                {
+                    int bonus{ depth * depth };
+                    int clamped_bonus{ std::clamp(bonus, -max_history, max_history) };
+                    board.history_table[colour + history_table_offset][move.start][move.end] +=
+                    clamped_bonus - board.history_table[colour + history_table_offset][move.start][move.end] * std::abs(clamped_bonus) / max_history;
+                }
+
                 break;
             }
         }
@@ -196,14 +218,14 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
             }
         }
 
-        order_moves(legal_moves, hash_move);
+        order_moves(board, legal_moves, hash_move, colour, 0);
         for (int i{}; i < legal_moves.move_count; i++)
         {
             Move move{ legal_moves.moves[i] };
             if (move.is_legal)
             {
                 History history{ make_move(board, move) };
-                int score{ -negamax(board, -beta, -alpha, -colour, current_depth - 1, false) };
+                int score{ -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false) };
                 undo_move(board, move, history);
 
                 if (score > best_score)

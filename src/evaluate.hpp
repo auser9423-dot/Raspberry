@@ -22,34 +22,53 @@ inline static constexpr std::array<int, 13> pieces
 
 inline static constexpr std::array<std::array<int, 6>, 6> MVV_LVA
 {
-    { // p,   n,   b,   r,   q,   k   (attacker)
-        {600, 500, 400, 300, 200, 100}, // p   (victim)
-        {700, 600, 500, 400, 300, 200}, // n
-        {800, 700, 600, 500, 400, 300}, // b
-        {900, 800, 700, 600, 500, 400}, // r
-        {1000, 900, 800, 700, 600, 500}, // q
-        {1100, 1000, 900, 800, 700, 600} // k
+    { // p,       n,       b,      r,      q,      k      (attacker)
+        {600000,  500000,  400000, 300000, 200000, 100000}, // p
+        {700000,  600000,  500000, 400000, 300000, 200000}, // n
+        {800000,  700000,  600000, 500000, 400000, 300000}, // b 
+        {900000,  800000,  700000, 600000, 500000, 400000}, // r     (victim)
+        {1000000, 900000,  800000, 700000, 600000, 500000}, // q
+        {1100000, 1000000, 900000, 800000, 700000, 600000}  // k
     }
 };
 
 inline static constexpr int start_material{ (piece_values[queen + piece_value_offset] * 2) + (piece_values[rook + piece_value_offset] * 4) + (piece_values[bishop + piece_value_offset] * 4) + (piece_values[knight + piece_value_offset] * 4) };
 
-void order_moves(Moves& moves, Move& hash_move)
+void order_moves(Board& board, Moves& moves, Move& hash_move, int colour, int ply)
 {
     for (int i{}; i < moves.move_count; i++)
     {
+        Move& killer_move_1{ board.killer_table[ply][0] };
+        Move& killer_move_2{ board.killer_table[ply][1] };
         Move& move{ moves.moves[i] };
+
         if (move.piece != none && move.start == hash_move.start && move.end == hash_move.end && move.promotion_piece == hash_move.promotion_piece)
         {
-            move.score = 1000000;
+            move.score = 1200000;
         }
         else if (move.move_type == en_passant_move)
         {
             move.score = MVV_LVA[0][0];
         }
+        else if (move.promotion_piece != none)
+        {
+            move.score = 1150000;
+        }
         else if (move.captured_piece != none)
         {
-            move.score = (move.captured_piece == empty) ? 0 : MVV_LVA[std::abs(move.captured_piece) - 1][std::abs(move.piece) - 1];
+            move.score = MVV_LVA[std::abs(move.captured_piece) - 1][std::abs(move.piece) - 1];
+        }
+        else if (move.start == killer_move_1.start && move.end == killer_move_1.end &&  move.promotion_piece == killer_move_1.promotion_piece)
+        {
+            move.score = 560000;
+        }
+        else if (move.start == killer_move_2.start && move.end == killer_move_2.end &&  move.promotion_piece == killer_move_2.promotion_piece)
+        {
+            move.score = 550000;
+        }
+        else // All quiet moves
+        {
+            move.score = board.history_table[colour + history_table_offset][move.start][move.end];
         }
     }
 

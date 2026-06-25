@@ -17,6 +17,7 @@ inline static constexpr int white_queen_side_castle_right{ 1 };
 inline static constexpr int black_king_side_castle_right{ 2 };
 inline static constexpr int black_queen_side_castle_right{ 3 };
 
+inline static constexpr int max_ply{ 128 };
 inline static constexpr int board_size{ 144 };
 inline static constexpr int board_start{ 26 };
 inline static constexpr int board_end{ 117 };
@@ -182,6 +183,8 @@ inline static const std::array<uint64_t, 4> TT_castle_rights = []()
     return temp;
 }();
 
+inline static constexpr int history_table_offset{ 1 };
+
 class Board
 {
     private:
@@ -225,6 +228,9 @@ class Board
 
     static constexpr std::array<int, 8> default_piece_order{rook, knight, bishop, queen, king, bishop, knight, rook};
 
+    std::array<std::array<Move, 2>, max_ply> killer_table{};
+    std::array<std::array<std::array<int, board_size>, board_size>, 3> history_table{};
+
     std::vector<uint64_t> previous_positions{};
     int moves_since_pawn_move{};
 
@@ -236,9 +242,10 @@ class Board
     friend int evaluate (const Board& board, int colour);
     friend NullHistory make_null_move(Board& board);
     friend void undo_null_move(Board& board, NullHistory& null_history);
-    friend int negamax(Board& board, int alpha, int beta, int colour, int depth, bool is_null_move);
+    friend int negamax(Board& board, int alpha, int beta, int colour, int depth, int ply, bool is_null_move);
     friend Move search(Board& board, int alpha, int beta, int colour, int depth);
     friend int quiescence(Board& board, int alpha, int beta, int colour);
+    friend void order_moves(Board& board, Moves& moves, Move& hash_move, int colour, int ply);
 
     public:
     void setup_default_start_position()

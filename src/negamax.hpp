@@ -7,6 +7,7 @@
 #include "transposition_table.hpp"
 #include <iostream>
 #include <string>
+#include <chrono>
 
 inline static constexpr int negative_infinity{ -1000000000 };
 inline static constexpr int null_move_reduction{ 2 };
@@ -14,7 +15,7 @@ inline static constexpr int negamax_late_move_reduction{ 2 };
 inline static constexpr int search_late_move_reduction{ 1 };
 inline static constexpr int max_history{ 550000 };
 
-inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int ply, bool is_null_move)
+inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int ply, bool is_null_move, uint64_t& nodes)
 {
     if (board.moves_since_pawn_move >= 100)
     {
@@ -68,7 +69,7 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
 
     if (depth == 0)
     {
-        return quiescence(board, alpha, beta, colour);
+        return quiescence(board, alpha, beta, colour, nodes);
     }
 
     int best_score{ negative_infinity };
@@ -80,7 +81,7 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
     if (board.current_material > 0 && depth >= 4 && !is_in_check && !is_null_move)
     {
         NullHistory null_history{ make_null_move(board) };
-        int null_move_score{ -negamax(board, -beta, -(beta - 1), -colour, depth - 1 - null_move_reduction, ply + 1, true) };
+        int null_move_score{ -negamax(board, -beta, -(beta - 1), -colour, depth - 1 - null_move_reduction, ply + 1, true, nodes) };
         undo_null_move(board, null_history);
 
         if (null_move_score >= beta)
@@ -101,11 +102,12 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
         if (move.is_legal)
         {
             History history{ make_move(board, move) };
+            nodes++;
 
             int score{};
             if (moves_played == 0)
             {
-                score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+                score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false, nodes);
             }
             else // PVS
             {
@@ -121,22 +123,22 @@ inline int negamax(Board& board, int alpha, int beta, int colour, int depth, int
                     && !is_square_attacked(board, opponent_king_position, colour) // !is_opponent_in_check
                 )
                 {
-                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1 - negamax_late_move_reduction, ply + 1, false);
+                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1 - negamax_late_move_reduction, ply + 1, false, nodes);
                     if (score > alpha)
                     {
-                        score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false);
+                        score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false, nodes);
                         if (score > alpha && score < beta)
                         {
-                            score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+                            score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false, nodes);
                         }
                     }
                 }
                 else
                 {
-                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false);
+                    score = -negamax(board, -(alpha + 1), -alpha, -colour, depth - 1, ply + 1, false, nodes);
                     if (score > alpha && score < beta)
                     {
-                        score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false);
+                        score = -negamax(board, -beta, -alpha, -colour, depth - 1, ply + 1, false, nodes);
                     }
                 }
             }
@@ -239,6 +241,9 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
     int king_position = (colour == white) ? board.white_king_position : board.black_king_position;
     bool is_in_check{ is_square_attacked(board, king_position, -colour) };
 
+    uint64_t nodes{};
+    auto time_start{ std::chrono::steady_clock::now() };
+
     for (int current_depth{ 1 }; current_depth <= depth; current_depth++)
     {
         int best_score{ negative_infinity };
@@ -262,17 +267,19 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
 
         int moves_played{};
         order_moves(board, legal_moves, hash_move, colour, 0);
+
         for (int i{}; i < legal_moves.move_count; i++)
         {
             Move move{ legal_moves.moves[i] };
             if (move.is_legal)
             {
                 History history{ make_move(board, move) };
+                nodes++;
 
                 int score{};
                 if (moves_played == 0)
                 {
-                    score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false);
+                    score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false, nodes);
                 }
                 else // PVS
                 {
@@ -288,22 +295,22 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
                         && !is_square_attacked(board, opponent_king_position, colour)
                     )
                     {
-                        score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1 - search_late_move_reduction, 0, false);
+                        score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1 - search_late_move_reduction, 0, false, nodes);
                         if (score > alpha)
                         {
-                            score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1, 0, false);
+                            score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1, 0, false, nodes);
                             if (score > alpha && score < beta)
                             {
-                                score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false);
+                                score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false, nodes);
                             }
                         }
                     }
                     else
                     {
-                        score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1, 0, false);
+                        score = -negamax(board, -(alpha + 1), -alpha, -colour, current_depth - 1, 0, false, nodes);
                         if (score > alpha && score < beta)
                         {
-                            score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false);
+                            score = -negamax(board, -beta, -alpha, -colour, current_depth - 1, 0, false, nodes);
                         }
                     }
                 }
@@ -329,6 +336,9 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
             }
         }
 
+        auto time_end{ std::chrono::steady_clock::now() };
+        std::chrono::duration<double> time_elapsed{ time_end - time_start };
+
         TT_entry.best_move = best_move;
         TT_entry.score = best_score;
         TT_entry.depth = current_depth;
@@ -352,7 +362,7 @@ inline Move search(Board& board, int alpha, int beta, int colour, int depth)
         {
             best_move_converted += promotion_value_to_piece(best_move.promotion_piece);
         }
-        std::cout << "info" << " depth " << current_depth << " score cp " << best_score << " pv " << best_move_converted << std::endl;
+        std::cout << "info" << " depth " << current_depth << " score cp " << best_score << " nodes " << nodes << " nps " << static_cast<int>(nodes / time_elapsed.count()) << " pv " << best_move_converted << std::endl;
     }
 
     return best_move;

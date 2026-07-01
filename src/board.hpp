@@ -242,9 +242,9 @@ class Board
     friend int evaluate (const Board& board, int colour);
     friend NullHistory make_null_move(Board& board);
     friend void undo_null_move(Board& board, NullHistory& null_history);
-    friend int negamax(Board& board, int alpha, int beta, int colour, int depth, int ply, bool is_null_move);
+    friend int negamax(Board& board, int alpha, int beta, int colour, int depth, int ply, bool is_null_move, uint64_t& nodes);
     friend Move search(Board& board, int alpha, int beta, int colour, int depth);
-    friend int quiescence(Board& board, int alpha, int beta, int colour);
+    friend int quiescence(Board& board, int alpha, int beta, int colour, uint64_t& nodes);
     friend void order_moves(Board& board, Moves& moves, Move& hash_move, int colour, int ply);
 
     public:

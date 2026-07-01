@@ -7,7 +7,7 @@
 #include "move.hpp"
 #include "pieces.hpp"
 
-int quiescence(Board& board, int alpha, int beta, int colour)
+int quiescence(Board& board, int alpha, int beta, int colour, uint64_t& nodes)
 {
     int static_eval{ evaluate(board, colour) };
     int best_score{ static_eval };
@@ -41,7 +41,9 @@ int quiescence(Board& board, int alpha, int beta, int colour)
         if (move.is_legal && (move.captured_piece != empty || move.move_type == en_passant_move || std::abs(move.promotion_piece) != none))
         {
             History history{ make_move(board, move) };
-            int score{ -quiescence(board, -beta, -alpha, -colour) };
+            nodes++;
+            
+            int score{ -quiescence(board, -beta, -alpha, -colour, nodes) };
             undo_move(board, move, history);
 
             if (score >= beta)
